@@ -1,0 +1,24 @@
+<html lang="en">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+	integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+<body>
+	<div class="container" style="padding-top: 70;">
+		<div class="row">
+			<div class="col-md-4 offset-4">
+				<p class="text-muted mb-4">SIGN IN</p>
+				<form method="POST" class="uniForm">
+					{% csrf_token %}
+					<div class="form-group">
+						{%load crispy_forms_tags %}
+						{{ login_form | crispy }}
+					</div>
+					<div class="text-center"><button class="btn btn-primary btn-block" type="submit">Login</button></div>
+					<p> <a href="register">Sign Up</a></p>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+</body>

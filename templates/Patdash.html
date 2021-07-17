@@ -1,0 +1,31 @@
+<html lang="en">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+	integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+<body>
+	<nav class="navbar navbar-light bg-dark" style="color: white;">
+		<h4> {{user}} </h4>
+		<div class="ml-auto"><a href="/logout">Logout</a> </div>
+	</nav>
+	<div class="row" style="padding: 70 10 30 70;">
+		<div class="col-md-4">
+			<div class="container">
+				<img src="{{user.Profile_Image.url}}" width="300" height="300" />
+			</div>
+		</div>
+		<div class="col-md-8">
+			<div class="container" style="font-size:large;">
+				<h3>{% if user.Patient %}
+					<strong> Mr./Ms./Mrs. </strong>
+					{% endif %}<strong>{{user.first_name}} {{user.last_name}}</strong>
+				</h3><br />
+				Email: {{user.email}} <br />
+				Address : {{user.Address_Line_1}}<br />
+				City: {{user.City}}<br />
+				State: {{user.State}} <br />
+				Pin Code:{{user.Pin_Code}} <br />
+				{% if user.Doctor %} <p>Role: Patient</p> {% endif %}
+			</div>
+		</div>
+	</div>
+</body>
