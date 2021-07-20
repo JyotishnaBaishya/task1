@@ -1,0 +1,23 @@
+{% extends temp %}
+
+{% block content%}
+<div class="row" style="padding: 70 10 30 70;">
+	<div class="col-md-4">
+		<div class="container">
+			<img src="{{object.image.url}}" width="300" height="300" />
+		</div>
+	</div>
+	<div class="col-md-8">
+		<div class="container">
+			<h3>{{object.title}} </h3>
+			<hr />
+			<i>Dr. {{object.doc.first_name}} {{ object.doc.last_name}}</i> on <i><strong>{{object.get_category_display}}</strong></i><br />
+			<hr />
+			<i>{{object.summary}}</i>
+			<hr />
+			{{object.content}}
+			{% if user.Doctor %} <p>Role: Patient</p> {% endif %}
+		</div>
+	</div>
+</div>
+{% endblock %}
