@@ -49,3 +49,14 @@ class CategoryForm(forms.Form):
 		super(CategoryForm, self).__init__(*args, **kwargs)
 		self.helper = FormHelper()
 		self.helper.form_show_labels = False
+
+class AppointmentForm(forms.Form):
+	CATEGORY_CHOICES =[
+		('MENTAL_HEALTH', 'Mental Health'),
+		('HEART_DISEASE', 'Heart Disease'),
+		('COVID19', 'Covid19'),
+		('IMMUNISATION', 'Immunisation'),
+	]
+	speciality=forms.ChoiceField(choices=CATEGORY_CHOICES, required=True)
+	date=forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+	time=forms.TimeField(widget=forms.DateInput(attrs={'type': 'time'}))

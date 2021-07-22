@@ -38,6 +38,9 @@
 				State: {{user.State}} <br />
 				Pin Code:{{user.Pin_Code}} <br />
 				{% if user.Doctor %} <p>Role: Doctor</p> {% endif %}
+				{% if not user.doctor_auth %} <a class="btn btn-success btn-sm" href="/authorize">Click to enable appointment booking</a>
+				{% else %}<a class="btn btn-danger btn-sm" href="/revoke">Click to disable appointment booking</a>
+				{% endif %}
 			</div>
 		</div>
 	</div>

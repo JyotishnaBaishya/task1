@@ -1,0 +1,54 @@
+{% extends "Patdash.html" %}
+
+{% block content %}
+<style>
+	.box {
+		transition-property: box-shadow, transform;
+		transition-duration: 1s;
+	}
+
+	.box:hover {
+		/* box-shadow: 2px 2px 5px #8080807a; */
+		box-shadow: 1px 2px 8px 0px #00bcffb0;
+		transform: translateY(-9px);
+	}
+
+	.img-box {
+		padding: 10px;
+	}
+
+	.img-box img {
+		border-radius: 15px;
+		object-fit: cover;
+	}
+
+	#loading {
+		text-align: center;
+		display: none;
+	}
+</style>
+<div class="container" style="margin-top:20px;">
+</div>
+{% for value in doctors %}
+<div class="card mb-3 box" style="max-width: 640px; margin: auto;">
+	<div class="row">
+		<div class="col-md-8">
+			<div class="card-body">
+				<!-- <h5 class="card-title"><a href="postcontent/{{value.id}}" target="_blanck">{{value.title}}</a></h5> -->
+				<h4 class="card-title"><i><strong>Dr. {{value.first_name}} {{value.last_name}}</strong></i></h4>
+				<hr />
+				{% if not value.doctor_auth %} <i>Not Available</i>
+				{% else %}
+				<a href="/bookappointment/{{value.id}}" class="btn btn-outline-success">Book Appointment</a>
+				{% endif %}
+			</div>
+		</div>
+
+		<div class="col-md-4 img-box">
+			<img src="{{value.Profile_Image.url}}" class="card-img" alt="..." height="100%">
+		</div>
+	</div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

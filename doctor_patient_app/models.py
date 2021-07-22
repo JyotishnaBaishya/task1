@@ -15,6 +15,7 @@ class User(AbstractUser):
 	City=models.CharField(max_length=50)
 	State=models.CharField(max_length=50)
 	Pin_Code = models.IntegerField(validators=[MaxValueValidator(999999), MinValueValidator(10000)])
+	doctor_auth = models.JSONField(null=True)
 
 class Post(models.Model):
 	MENTAL_HEALTH='MH'

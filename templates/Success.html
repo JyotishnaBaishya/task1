@@ -1,0 +1,16 @@
+{% extends "Patdash.html" %}
+
+{% block content %}
+<div class="container" style="padding-top: 70;">
+	<div class="row">
+		<div class="col-md-4 offset-4">
+			<h4>{{msg}}</h4>
+			<p>Appointment with <strong>Dr. {{doctor}}</strong></p>
+			<hr />
+			<p><strong>Date: </strong>{{date}}</p>
+			<p><strong>Start: </strong>{{st}}</p>
+			<p><strong>End: </strong>{{et}}</p>
+		</div>
+	</div>
+</div>
+{% endblock %}

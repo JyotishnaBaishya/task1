@@ -1,5 +1,5 @@
 from django.shortcuts import  render, redirect
-from .forms import NewUserForm, PostForm, CategoryForm
+from .forms import NewUserForm, PostForm, CategoryForm, AppointmentForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -8,7 +8,14 @@ from django.views import View
 from django.views.generic import ListView, DetailView
 from django.views.generic.edit import CreateView, UpdateView
 from .models import User, Post
-from django import forms
+import json, csv, os, datetime
+import requests
+from django.conf import settings
+import google.oauth2.credentials
+import google_auth_oauthlib.flow
+import googleapiclient.discovery
+
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 def registerview(request):
 	return render(request=request, template_name="RegisterHome.html")
@@ -158,8 +165,144 @@ class PostContent(LoginRequiredMixin, DetailView):
             con['temp']="Patdash.html"
         return con
 
+class ViewDoctor(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    def test_func(self):
+        return self.request.user.Patient
+    login_url='/'
+    model=User
+    context_object_name = 'doctors'
+    template_name='Doctor_List.html'
+    def get_queryset(self):
+        queryset = User.objects.filter(Doctor=True)
+        return queryset
 
+class AppointmentView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.Patient
+    login_url='/'
+    def get(self, request, pk):
+        form=AppointmentForm()
+        return render(template_name="Appointment_Form.html", request=request, context={'form': form})
+    def post(self, request, pk):
+        form=AuthenticationForm(request, data=request.POST)
+        speciality=form.data.get('speciality')
+        date=form.data.get('date')
+        time=form.data.get('time')
+        time+=':00'
+        st= datetime.datetime.strptime(time,"%H:%M:%S")
+        et= st+datetime.timedelta(minutes=45)
+        start=date+'T'+time+'+05:30'
+        end=date+'T'+str(et.time())+'+05:30'
+        name=self.request.user.first_name+' '+self.request.user.last_name
+        event = {
+                'summary': 'Appointment with '+name+' ,speciality= '+speciality,
+                'start': {
+                    'dateTime': start,
+                },
+                'end': {
+                    'dateTime': end,
+                },
+                # 'attendees': [
+                #     {'email': 'lpage@example.com'},
+                #     {'email': 'sbrin@example.com'},
+                # ],
+                'reminders': {
+                    'useDefault': False,
+                    'overrides': [
+                    {'method': 'email', 'minutes': 24 * 60},
+                    {'method': 'popup', 'minutes': 10},
+                    ],
+                },
+                }
+        doc=User.objects.get(pk=pk)
+        # print(doc.email)
+        # print(doc.doctor_auth)
+        if doc.doctor_auth is None:
+            return render(template_name="Success.html", request=request, context={"msg":"Not Available"})
+        c=json.loads(doc.doctor_auth)
+        creds={'token': c['access_token'],
+            'refresh_token': c['refresh_token'],
+            'token_uri': settings.TOKEN_URI,
+            'client_id': settings.CLIENT_ID,
+            'client_secret': settings.CLIENT_SECRET,
+            'scopes': c['scope']}
+        credentials = google.oauth2.credentials.Credentials(**creds)
+        service = googleapiclient.discovery.build(
+            'calendar', 'v3', credentials=credentials)
+        event = service.events().insert(calendarId='primary', body=event).execute()
+        credentials=json.loads(credentials.to_json())
+        creds={'access_token': credentials['token'],
+            'refresh_token': credentials['refresh_token'],
+            'scope': credentials['scopes']}
+        print(event)
+        doc.doctor_auth=json.dumps(creds)
+        doc.save()
+        return render(template_name="Success.html", request=request, context={"msg":"Appoinment Booked!", 'st':st.time(), 'et': et.time(), 'doctor': doc.first_name+' '+doc.last_name, 'date': date})
+
+
+class AuthorizeView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.Doctor
+    login_url='/'
+    def get(self, request):
+        if request.user.doctor_auth is not None:
+            return redirect('/docdashboard')
+        CLIENT_SECRETS_FILE = "doctor_patient_app/client_secret.json"
+        SCOPES = ['https://www.googleapis.com/auth/calendar.events']
+        flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES)
+        flow.redirect_uri = "http://localhost:8000/complete"
+        authorization_url, state = flow.authorization_url(
+            access_type='offline',
+            include_granted_scopes='true',
+            login_hint=self.request.user.email)
+        request.session['state'] = state
+        print(state)
+        print(request.session['state'])
+        return redirect(authorization_url)
+
+class CompleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.Doctor
+    login_url='/'
+    def get(self, request):
+        state = request.session['state']
+        CLIENT_SECRETS_FILE = "doctor_patient_app/client_secret.json"
+        SCOPES = ['https://www.googleapis.com/auth/calendar.events']
+        flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=SCOPES, state=state)
+        flow.redirect_uri = "http://localhost:8000/complete"
+        authorization_response=request.get_full_path()
+        credentials=flow.fetch_token(authorization_response=authorization_response)
+        print(credentials)
+        user=User.objects.get(username=request.user)
+        user.doctor_auth=json.dumps(credentials)
+        user.save()
+        return redirect('/docdashboard')
+
+
+class RevokeView(LoginRequiredMixin, UserPassesTestMixin, View):
+    def test_func(self):
+        return self.request.user.Doctor
+    login_url='/'
+    def get(self, request):
+        if not request.user.doctor_auth:
+            return redirect('/docdashboard')
+        xyz=json.loads(request.user.doctor_auth)
+        print(xyz)
+        revoke = requests.post('https://oauth2.googleapis.com/revoke',
+            params={'token': xyz["access_token"]},
+            headers = {'content-type': 'application/x-www-form-urlencoded'})
+
+        status_code = getattr(revoke, 'status_code')
+        print(status_code)
+        print("OK")
+        user=User.objects.get(username=request.user)
+        user.doctor_auth=None
+        user.save()
+        print(request.user.doctor_auth)
+        return redirect('/docdashboard')
 
 def logout_request(request):
     logout(request)
     return redirect('/')
+
+

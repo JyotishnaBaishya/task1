@@ -17,5 +17,10 @@ urlpatterns = [
 	path('myposts', views.MyPost.as_view(), name="myposts"),
 	path('viewposts', views.ViewPost.as_view(), name="viewposts"),
 	path('postcontent/<int:pk>', views.PostContent.as_view(), name="postcontent"),
+	path('doctors', views.ViewDoctor.as_view(), name="doctors"),
+	path('bookappointment/<int:pk>', views.AppointmentView.as_view(), name="bookappointment"),
+	path('authorize', views.AuthorizeView.as_view(), name="auth"),
+	path('complete', views.CompleteView.as_view(), name="comp"),
+	path('revoke', views.RevokeView.as_view(), name="revoke"),
 	path('logout/', views.logout_request, name="logout"),
 	]
